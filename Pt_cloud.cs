@@ -1,4 +1,4 @@
-   private void RunScript(double Largura, int Altura, double horiz_div, double subdiv, int N_cabos, int dist_centro, int h_cabos, ref object Debug, ref object Cloud)
+   private void RunScript(double Largura, int Altura, double horiz_div, double subdiv, int N_cabos, List<int> dist_centro, List<int> h_cabos, ref object Debug, ref object Cloud)
   {
     List<Point3d> Pt_cloud = new List<Point3d>(); // no programa final usar 2D array !!! [x,y,z]
 
@@ -68,18 +68,17 @@
 
     //Arms
     //encontrar os horiz + perto
+    for(int n = 0;n < (N_cabos / 2);n++){
+      int init_h = find_nearest(h_cabos[n], horiz_div, ring_z_step);
 
-    if(N_cabos == 2){
-      int init_h = find_nearest(h_cabos, horiz_div, ring_z_step);
+      //Debug = init_h; // remover
 
-      Debug = init_h; // remover
-
-      double arm_lenght = Math.Abs(dist_centro - (Largura * 0.5 - init_h * tilt));
+      double arm_lenght = Math.Abs(dist_centro[n] - (Largura * 0.5 - init_h * tilt));
       //lower arm angle
       double XY_m = (Largura * 0.5 - init_h * tilt) / arm_lenght; //inclinação da reta Y=mx em XY
-      double XZ_m = (h_cabos - init_h * ring_z_step) / arm_lenght;
+      double XZ_m = (h_cabos[n] - init_h * ring_z_step) / arm_lenght;
       //upper arm angle
-      double XZ_m_upp = (h_cabos - (init_h + 1) * ring_z_step) / arm_lenght;
+      double XZ_m_upp = (h_cabos[n] - (init_h + 1) * ring_z_step) / arm_lenght;
 
 
       //############//
@@ -91,7 +90,7 @@
       for(int _subdiv = 1;_subdiv <= 5;_subdiv++){ // criar variavel se necessario controlo sobre o refinamento do braço
         double _x = (Largura - init_h * tilt) + (arm_lenght / 5) * _subdiv;
         if(_subdiv == 5){
-          Pt_cloud.Add(new Point3d(_x, Largura * 0.5, h_cabos));
+          Pt_cloud.Add(new Point3d(_x, Largura * 0.5, h_cabos[n]));
           break;
         }
         Pt_cloud.Add(new Point3d(_x, init_h * tilt + XY_m * (_x - (Largura - init_h * tilt)), init_h * ring_z_step + XZ_m * (_x - (Largura - init_h * tilt))));//1st lower arm
@@ -106,7 +105,7 @@
       for(int _subdiv = 1;_subdiv <= 5;_subdiv++){ // criar variavel se necessario controlo sobre o refinamento do braço
         double _x = ( init_h * tilt) - (arm_lenght / 5) * _subdiv;
         if(_subdiv == 5){
-          Pt_cloud.Add(new Point3d(_x, Largura * 0.5, h_cabos));
+          Pt_cloud.Add(new Point3d(_x, Largura * 0.5, h_cabos[n]));
           break;
         }
         Pt_cloud.Add(new Point3d(_x, init_h * tilt - XY_m * (_x - init_h * tilt), init_h * ring_z_step - XZ_m * (_x - init_h * tilt)));//1st lower arm
@@ -149,8 +148,8 @@
 
         Pt_cloud.Add(new Point3d(_x, Largura - init_h * tilt + XY_m * (_x - init_h * tilt), (init_h + 1) * ring_z_step - XZ_m_upp * (_x - init_h * tilt)));
       }
-
     }
+
     Cloud = Pt_cloud;
   }
 
