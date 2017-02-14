@@ -1,4 +1,4 @@
-private void RunScript(double Largura, int N_cabos, int Altura, double delta_h, double horiz_div, double subdiv, ref object Debug, ref object Cloud)
+  private void RunScript(double Largura, int Altura, double horiz_div, double subdiv, int N_cabos, int dist_centro, int h_cabos, ref object Debug, ref object Cloud)
   {
     List<Point3d> Pt_cloud = new List<Point3d>(); // no programa final usar 2D array !!! [x,y,z]
 
@@ -66,5 +66,69 @@ private void RunScript(double Largura, int N_cabos, int Altura, double delta_h, 
       reverse = false;
     }
 
+    //Arms
+    //encontrar os horiz + perto
+
+    if(N_cabos == 2){
+      int init_h = find_nearest(h_cabos, horiz_div, ring_z_step);
+
+      double arm_lenght = Math.Abs(dist_centro - (Largura * 0.5 - init_h * tilt));
+      //lower arm angle
+      double XY_m = (Largura * 0.5 - init_h * tilt) / arm_lenght; //inclinação da reta Y=mx em XY
+      double XZ_m = (h_cabos - init_h * ring_z_step) / arm_lenght;
+      //upper arm angle
+      double XZ_m_upp = (h_cabos - (init_h + 1) * ring_z_step) / arm_lenght;
+      Debug = XZ_m; // remover
+
+      //1st lower arm
+      for(int _subdiv = 1;_subdiv <= 5;_subdiv++){ // criar variavel se necessario controlo sobre o refinamento do braço
+        double _x = (Largura - init_h * tilt) + (arm_lenght / 5) * _subdiv;
+        if(_subdiv == 5){
+          Pt_cloud.Add(new Point3d(_x, Largura * 0.5, h_cabos));
+          break;
+        }
+        Pt_cloud.Add(new Point3d(_x, init_h * tilt + XY_m * (_x - (Largura - init_h * tilt)), init_h * ring_z_step + XZ_m * (_x - (Largura - init_h * tilt))));//1st lower arm
+      }
+
+      //2nd lower arm
+      for(int _subdiv = 1;_subdiv < 5;_subdiv++){ // nao "<=" para nao criar 2 pts de convergencia
+        double _x = (Largura - init_h * tilt) + (arm_lenght / 5) * _subdiv;
+        Pt_cloud.Add(new Point3d(_x, Largura - init_h * tilt - XY_m * (_x - (Largura - init_h * tilt)), init_h * ring_z_step + XZ_m * (_x - (Largura - init_h * tilt))));
+      }
+
+      //############//
+      //#Upper arms#//
+      //############//
+
+      //1st upper arm
+      for(int _subdiv = 1;_subdiv < 5;_subdiv++){ // criar variavel se necessario controlo sobre o refinamento do braço
+        double _x = (Largura - init_h * tilt) + (arm_lenght / 5) * _subdiv;
+
+        Pt_cloud.Add(new Point3d(_x, init_h * tilt + XY_m * (_x - (Largura - init_h * tilt)), (init_h + 1) * ring_z_step + XZ_m_upp * (_x - (Largura - init_h * tilt))));
+      }
+      //2nd upper arm
+      for(int _subdiv = 1;_subdiv < 5;_subdiv++){ // nao "<=" para nao criar 2 pts de convergencia
+        double _x = (Largura - init_h * tilt) + (arm_lenght / 5) * _subdiv;
+
+        Pt_cloud.Add(new Point3d(_x, Largura - init_h * tilt - XY_m * (_x - (Largura - init_h * tilt)), (init_h + 1) * ring_z_step + XZ_m_upp * (_x - (Largura - init_h * tilt))));
+      }
+      //retas desses 2 pts
+      //
+    }
     Cloud = Pt_cloud;
+  }
+
+  // <Custom additional code> 
+  private int find_nearest(int altura, double horiz_div, double ring_z_step){
+    int nearest = -1;
+    double dist = 10000;
+
+    for (int h = 1; h <= horiz_div - 1; h++){
+      if(dist > Math.Abs(altura - h * ring_z_step)){
+        dist = Math.Abs(altura - h * ring_z_step);
+        nearest = h;
+      }
+    }
+
+    return nearest;
   }
