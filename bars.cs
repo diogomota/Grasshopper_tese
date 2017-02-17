@@ -1,143 +1,114 @@
-   private void RunScript(List<Point3d> Cloud, int subdiv, int horiz_div, ref object bars)
-  {
-    List<Line> Lines = new List<Line>();
-    //
-    //Connect support pts
-    //
-    //add Lcr
-    for(int i = 0; i <= 4;i++){
+ private List<Line> arm_bars(ref List<Line> Lines, List<Point3d> arm_cld, List<int> connection_rings, List<Point3d> Cloud, int sub, int n_cabos){
+    List<Line> _tempLines = new List<Line>();
+    for (int a = 0;a < n_cabos / 2;a++){
+      for (int i = 0;i <= 2;i++){
+        if(i == 0){
+          // connect w/ tower
 
-      if (i == 0){
-        for (int j = 4;j <= 4 + subdiv;j++){
-          Lines.Add(new Line(Cloud[0], Cloud[j]));
+          //Lower right
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] - 1) + sub], arm_cld[i + a * 34]));
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] - 1) + 2 * sub], arm_cld[5 + a * 34]));
+          //Upper right
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] ) + sub], arm_cld[i + 9 + a * 34]));
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] ) + 2 * sub], arm_cld[i + 13 + a * 34]));
+
+          //Lower left
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] - 1)], arm_cld[i + 17 + a * 34]));
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] - 1) + 3 * sub], arm_cld[i + 17 + 5 + a * 34]));
+          //Upper left
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] )], arm_cld[i + 26 + a * 34]));
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] ) + 3 * sub], arm_cld[i + 17 + 5 + 8 + a * 34]));
+
+          //Diagonals
+          //1st plane right
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] - 1) + sub], arm_cld[9 + a * 34]));
+          //1st plane left
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] - 1)], arm_cld[26 + a * 34]));
+
+          //2nd plane right
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] - 1) + 2 * sub], arm_cld[13 + a * 34]));
+          //2nd plane left
+          Lines.Add(new Line(Cloud[4 + (4 + (sub - 1) * 4) * (connection_rings[0 + a] - 1) + 3 * sub], arm_cld[30 + a * 34]));
+
+
         }
-        for (int j = 8 + 4 * (subdiv - 1) - 1;j >= 8 + 4 * (subdiv - 1) - subdiv;j--){
-          Lines.Add(new Line(Cloud[0], Cloud[j]));
-        }
 
-      }
-      if (i == 1){
-        for (int j = 4;j <= 4 + 2 * subdiv;j++){
-          Lines.Add(new Line(Cloud[1], Cloud[j]));
-        }
-      }
-      if (i == 2){
-        for (int j = 4 + subdiv;j <= 4 + 3 * subdiv;j++){
-          Lines.Add(new Line(Cloud[2], Cloud[j]));
-        }
-      }
-      if (i == 3){
-        for (int j = 4 + subdiv * 2;j <= 4 + 4 * subdiv - 1;j++){
-          Lines.Add(new Line(Cloud[3], Cloud[j]));
-        }
-        Lines.Add(new Line(Cloud[3], Cloud[4]));
-      }
-    }
+        //diagonals 1st plane right
+        Lines.Add(new Line(arm_cld[i + a * 34], arm_cld[10 + i + a * 34]));
+        Lines.Add(new Line(arm_cld[i + a * 34], arm_cld[9 + i + a * 34]));
+        //diagonals 1st plane left
+        Lines.Add(new Line(arm_cld[17 + i + a * 34], arm_cld[27 + i + a * 34]));
+        Lines.Add(new Line(arm_cld[17 + i + a * 34], arm_cld[26 + i + a * 34]));
 
-    //Connect all other points
-    //add Lcr nesta fase !!!
-    int ring_pt = 4 + (subdiv - 1) * 4;
-    //init and end pts
-    for(int h = 0; h <= horiz_div - 3;h++){
+        //diagonals 2nd plane right
+        Lines.Add(new Line(arm_cld[5 + i + a * 34], arm_cld[14 + i + a * 34]));
+        Lines.Add(new Line(arm_cld[5 + i + a * 34], arm_cld[13 + i + a * 34]));
+        //diagonals 2nd plane left
+        Lines.Add(new Line(arm_cld[22 + i + a * 34], arm_cld[31 + i + a * 34]));
+        Lines.Add(new Line(arm_cld[22 + i + a * 34], arm_cld[30 + i + a * 34]));
 
-      // Lado +XX
-      for(int i = 4 + ring_pt * h;i < 4 + ring_pt * (h + 1);i++){//init coord.
-        //lados
-        if(i == 4 + ring_pt * h){//cantos
-          for(int j = 4 + ring_pt * (h + 1);j <= subdiv + 4 + ring_pt * (h + 1) - 1;j++){ //-1 para nao conectar a diagonal oposta
-            Lines.Add(new Line(Cloud[i], Cloud[j]));
-          }
-        }else if(i == 4 + ring_pt * h + subdiv){
-          for(int j = 4 + ring_pt * (h + 1) + 1;j <= subdiv + 4 + ring_pt * (h + 1) - 1;j++){ //+1 para nao conectar a diagonal oposta
-            Lines.Add(new Line(Cloud[i], Cloud[j])); //quando i = j-ring_pt  id bar as active(always)
-          }
-        }else{ //pts centrais
-          if(i > 4 + ring_pt * h && i < 4 + ring_pt * h + subdiv){
-            for(int j = 4 + ring_pt * (h + 1);j <= subdiv + 4 + ring_pt * (h + 1);j++){
-              Lines.Add(new Line(Cloud[i], Cloud[j]));
-            }
-          }
-        }
-      }
-      // Lado +YY
-      for(int i = 4 + subdiv + ring_pt * h;i < 4 + subdiv + ring_pt * (h + 1);i++){//init coord.
+        //1st lower chord
+        //right
+        Lines.Add(new Line(arm_cld[i + a * 34], arm_cld[i + 1 + a * 34]));
+        //left
+        Lines.Add(new Line(arm_cld[17 + i + a * 34], arm_cld[18 + i + a * 34]));
 
-        //lados
-        if(i == 4 + subdiv + ring_pt * h){//cantos
-          for(int j = 4 + subdiv + ring_pt * (h + 1);j <= 2 * subdiv + 4 + ring_pt * (h + 1) - 1;j++){
-            Lines.Add(new Line(Cloud[i], Cloud[j]));
-          }
-        }else if(i == 4 + ring_pt * h + 2 * subdiv){
-          for(int j = 4 + subdiv + ring_pt * (h + 1) + 1;j <= 2 * subdiv + 4 + ring_pt * (h + 1) - 1;j++){
-            Lines.Add(new Line(Cloud[i], Cloud[j]));
-          }
+        //2nd lower chord
+        //right
+        Lines.Add(new Line(arm_cld[5 + i + a * 34], arm_cld[6 + i + a * 34]));
+        //left
+        Lines.Add(new Line(arm_cld[22 + i + a * 34], arm_cld[23 + i + a * 34]));
 
-        }else{ //pts centrais
-          if(i > 4 + subdiv + ring_pt * h && i < 4 + ring_pt * h + 2 * subdiv){
-            for(int j = 4 + subdiv + ring_pt * (h + 1);j <= 2 * subdiv + 4 + ring_pt * (h + 1);j++){
-              Lines.Add(new Line(Cloud[i], Cloud[j]));
-            }
-          }
-        }
-      }
+        //1st upper chord
+        //right
+        Lines.Add(new Line(arm_cld[i + 9 + a * 34], arm_cld[i + 10 + a * 34]));
+        //left
+        Lines.Add(new Line(arm_cld[i + 26 + a * 34], arm_cld[i + 27 + a * 34]));
 
-      // Lado -XX
-      for(int i = 4 + 2 * subdiv + ring_pt * h;i < 4 + 2 * subdiv + ring_pt * (h + 1);i++){//init coord.
-        //lados
-        if(i == 4 + 2 * subdiv + ring_pt * h){//cantos
-          for(int j = 4 + 2 * subdiv + ring_pt * (h + 1);j <= 3 * subdiv + 4 + ring_pt * (h + 1) - 1;j++){
-            Lines.Add(new Line(Cloud[i], Cloud[j]));
-          }
-        }else if(i == 4 + ring_pt * h + 3 * subdiv){
-          for(int j = 4 + 2 * subdiv + ring_pt * (h + 1) + 1;j <= 3 * subdiv + 4 + ring_pt * (h + 1) - 1;j++){
-            Lines.Add(new Line(Cloud[i], Cloud[j]));
-          }
-        }else{ //pts centrais
-          if(i > 4 + 2 * subdiv + ring_pt * h && i < 4 + ring_pt * h + 3 * subdiv){
-            for(int j = 4 + 2 * subdiv + ring_pt * (h + 1);j <= 3 * subdiv + 4 + ring_pt * (h + 1);j++){
-              Lines.Add(new Line(Cloud[i], Cloud[j]));
-            }
-          }
-        }
-      }
+        //2nd upper chord
 
-      // Lado -YY
-      for(int i = 4 + 3 * subdiv + ring_pt * h;i < 4 + 3 * subdiv + ring_pt * (h + 1);i++){//init coord.
-        //lados
-        if(i == 4 + 3 * subdiv + ring_pt * h){//cantos
-          for(int j = 4 + 3 * subdiv + ring_pt * (h + 1);j <= 4 * subdiv + 4 + ring_pt * (h + 1) - 1;j++){
-            Lines.Add(new Line(Cloud[i], Cloud[j]));
+        Lines.Add(new Line(arm_cld[13 + i + a * 34], arm_cld[14 + i + a * 34]));
+        Lines.Add(new Line(arm_cld[30 + i + a * 34], arm_cld[31 + i + a * 34]));
 
-            if(j != 4 + 3 * subdiv + ring_pt * (h + 1) ){ //exceto lado oposto
-              Lines.Add(new Line(Cloud[4 + ring_pt * h], Cloud[j]));
-            } //conect first corner w/ side -YY
+        //end lines
+        if(i == 2){
+          //1nd lower chord
+          //right
+          Lines.Add(new Line(arm_cld[i + 1 + a * 34], arm_cld[i + 2 + a * 34]));
+          //left
+          Lines.Add(new Line(arm_cld[18 + i + a * 34], arm_cld[19 + i + a * 34]));
 
-          }
-        }else{ //pts centrais
-          if(i > 4 + 3 * subdiv + ring_pt * h && i < 4 + ring_pt * h + 4 * subdiv){
-            for(int j = 4 + 3 * subdiv + ring_pt * (h + 1);j <= 4 * subdiv + 4 + ring_pt * (h + 1) - 1;j++){
-              Lines.Add(new Line(Cloud[i], Cloud[j]));
-            }
-            Lines.Add(new Line(Cloud[i], Cloud[4 + ring_pt * (h + 1)])); //conect to init pt
-          }
+          //2nd lower chord
+          //right
+          Lines.Add(new Line(arm_cld[6 + i + a * 34], arm_cld[4 + a * 34]));
+          //left
+          Lines.Add(new Line(arm_cld[23 + i + a * 34], arm_cld[21 + a * 34]));
+
+          //1st upper chord
+          //right
+          Lines.Add(new Line(arm_cld[10 + i + a * 34], arm_cld[4 + a * 34]));
+          //left
+          Lines.Add(new Line(arm_cld[24 + i + a * 34], arm_cld[21 + a * 34]));
+
+          //2nd upper chord
+          //right
+          Lines.Add(new Line(arm_cld[14 + i + a * 34], arm_cld[4 + a * 34]));
+          //left
+          Lines.Add(new Line(arm_cld[28 + i + a * 34], arm_cld[21 + a * 34]));
+
+          //Diagonals
+          //1st plane right
+          Lines.Add(new Line(arm_cld[i + 1 + a * 34], arm_cld[10 + i + a * 34]));
+          //1st plane left
+          Lines.Add(new Line(arm_cld[18 + i + a * 34], arm_cld[27 + i + a * 34]));
+          //2nd plane right
+          Lines.Add(new Line(arm_cld[i + 6 + a * 34], arm_cld[14 + i + a * 34]));
+          //2nd plane left
+          Lines.Add(new Line(arm_cld[23 + i + a * 34], arm_cld[31 + i + a * 34]));
         }
       }
+
 
     }
-
-    // Horizontal connections
-    //add Lcr nesta fase!!!
-    for(int h = 0; h <= horiz_div - 2;h++){
-      for(int i = 4 + h * ring_pt;i < 4 + (h + 1) * ring_pt - 1;i++){
-        Lines.Add(new Line(Cloud[i], Cloud[i + 1]));
-        if(i == 4 + (h + 1 ) * ring_pt - 2){
-          Lines.Add(new Line(Cloud[i + 1], Cloud[4 + h * ring_pt]));
-        }
-      }
-    }
-
-    //
-    bars = Lines;
-
-
+    return Lines;
   }
