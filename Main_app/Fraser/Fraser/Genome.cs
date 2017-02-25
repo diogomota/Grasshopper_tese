@@ -17,6 +17,7 @@ namespace Fraser
         //[numero,pt1,pt2,secçao,activo]
         public int pt_cnt;
 
+        public int bar_cnt;
         //methods
         //constructor
         public Genome(double Largura,int Altura, double horiz_div,double subdiv, int N_cabos, int[] h_cabos,double[] dist_centro)
@@ -24,9 +25,12 @@ namespace Fraser
             // init matrix dim
             pt_cloud = new double[4, (int)(17*N_cabos + 4 + (4 * subdiv) * (horiz_div - 1))]; // 17*cabos para os pts dos braços
             arm_cld = new double[4, 17 * N_cabos];
+            bars = new double[4, (int)((4 * horiz_div - 8) * (subdiv * subdiv) + (12 * horiz_div - 12) * subdiv - 8 * horiz_div + 36 * N_cabos + 20)];
             //bars = new double[...]
+
             pt_add_tower(ref pt_cloud, Largura, Altura,horiz_div,subdiv,ref pt_cnt);
             pt_add_arms(ref pt_cloud, Largura, Altura, horiz_div, subdiv, N_cabos, h_cabos, dist_centro, ref pt_cnt);
+           bar_cnt= connect_bars(ref pt_cloud, ref bars,(int)subdiv,(int)horiz_div);
             //
             
         }
@@ -244,6 +248,218 @@ namespace Fraser
             }
         }
 
+        private int connect_bars(ref double[,] pt, ref double[,] bars,int subdiv, int horiz_div)
+        {
+            int bar_num = 0;
+            //Support pts
+            for (int i = 0; i <= 4; i++)
+            {
+
+                if (i == 0)
+                {
+                    for (int j = 4; j <= 4 + subdiv; j++)
+                    {
+                        addBar(ref bars, bar_num, 0, j);
+                        bar_num++;
+                    }
+                    for (int j = 8 + 4 * (subdiv - 1) - 1; j >= 8 + 4 * (subdiv - 1) - subdiv; j--)
+                    {
+                        addBar(ref bars, bar_num, 0, j);
+                        bar_num++;
+                    }
+
+                }
+                if (i == 1)
+                {
+                    for (int j = 4; j <= 4 + 2 * subdiv; j++)
+                    {
+                        addBar(ref bars, bar_num, 1, j);
+                        bar_num++;
+                    }
+                }
+                if (i == 2)
+                {
+                    for (int j = 4 + subdiv; j <= 4 + 3 * subdiv; j++)
+                    {
+                        addBar(ref bars, bar_num, 2, j);
+                        bar_num++;
+                    }
+                }
+                if (i == 3)
+                {
+                    for (int j = 4 + subdiv * 2; j <= 4 + 4 * subdiv - 1; j++)
+                    {
+                        addBar(ref bars, bar_num, 3, j);
+                        bar_num++;
+                    }
+                    addBar(ref bars, bar_num, 3, 4);
+                    bar_num++;
+                }
+            }
+
+            //###############//
+            //Main tower bars//
+            //###############//
+
+            //add Lcr nesta fase !!!
+            int ring_pt = 4 + (subdiv - 1) * 4;
+            //init and end pts
+            for (int h = 0; h <= horiz_div - 3; h++)
+            {
+
+                // Lado +XX
+                for (int i = 4 + ring_pt * h; i < 4 + ring_pt * (h + 1); i++)
+                {//init coord.
+                 //lados
+                    if (i == 4 + ring_pt * h)
+                    {//cantos
+                        for (int j = 4 + ring_pt * (h + 1); j <= subdiv + 4 + ring_pt * (h + 1) - 1; j++)
+                        { //-1 para nao conectar a diagonal oposta
+                            addBar(ref bars, bar_num, i, j);
+                            bar_num++;
+                        }
+                    }
+                    else if (i == 4 + ring_pt * h + subdiv)
+                    {
+                        for (int j = 4 + ring_pt * (h + 1) + 1; j <= subdiv + 4 + ring_pt * (h + 1) - 1; j++)
+                        { //+1 para nao conectar a diagonal oposta
+                            addBar(ref bars, bar_num, i, j); //quando i = j-ring_pt  id bar as active(always)
+                            bar_num++; 
+                        }
+                    }
+                    else
+                    { //pts centrais
+                        if (i > 4 + ring_pt * h && i < 4 + ring_pt * h + subdiv)
+                        {
+                            for (int j = 4 + ring_pt * (h + 1); j <= subdiv + 4 + ring_pt * (h + 1); j++)
+                            {
+                                addBar(ref bars, bar_num, i, j);
+                                bar_num++;
+                            }
+                        }
+                    }
+                }
+                // Lado +YY
+                for (int i = 4 + subdiv + ring_pt * h; i < 4 + subdiv + ring_pt * (h + 1); i++)
+                {//init coord.
+
+                    //lados
+                    if (i == 4 + subdiv + ring_pt * h)
+                    {//cantos
+                        for (int j = 4 + subdiv + ring_pt * (h + 1); j <= 2 * subdiv + 4 + ring_pt * (h + 1) - 1; j++)
+                        {
+                            addBar(ref bars, bar_num, i, j);
+                            bar_num++;
+                        }
+                    }
+                    else if (i == 4 + ring_pt * h + 2 * subdiv)
+                    {
+                        for (int j = 4 + subdiv + ring_pt * (h + 1) + 1; j <= 2 * subdiv + 4 + ring_pt * (h + 1) - 1; j++)
+                        {
+                            addBar(ref bars, bar_num, i, j);
+                            bar_num++;
+                        }
+
+                    }
+                    else
+                    { //pts centrais
+                        if (i > 4 + subdiv + ring_pt * h && i < 4 + ring_pt * h + 2 * subdiv)
+                        {
+                            for (int j = 4 + subdiv + ring_pt * (h + 1); j <= 2 * subdiv + 4 + ring_pt * (h + 1); j++)
+                            {
+                                addBar(ref bars, bar_num, i, j);
+                                bar_num++;
+                            }
+                        }
+                    }
+                }
+
+                // Lado -XX
+                for (int i = 4 + 2 * subdiv + ring_pt * h; i < 4 + 2 * subdiv + ring_pt * (h + 1); i++)
+                {//init coord.
+                 //lados
+                    if (i == 4 + 2 * subdiv + ring_pt * h)
+                    {//cantos
+                        for (int j = 4 + 2 * subdiv + ring_pt * (h + 1); j <= 3 * subdiv + 4 + ring_pt * (h + 1) - 1; j++)
+                        {
+                            addBar(ref bars, bar_num, i, j);
+                            bar_num++;
+                        }
+                    }
+                    else if (i == 4 + ring_pt * h + 3 * subdiv)
+                    {
+                        for (int j = 4 + 2 * subdiv + ring_pt * (h + 1) + 1; j <= 3 * subdiv + 4 + ring_pt * (h + 1) - 1; j++)
+                        {
+                            addBar(ref bars, bar_num, i, j);
+                            bar_num++;
+                        }
+                    }
+                    else
+                    { //pts centrais
+                        if (i > 4 + 2 * subdiv + ring_pt * h && i < 4 + ring_pt * h + 3 * subdiv)
+                        {
+                            for (int j = 4 + 2 * subdiv + ring_pt * (h + 1); j <= 3 * subdiv + 4 + ring_pt * (h + 1); j++)
+                            {
+                                addBar(ref bars, bar_num, i, j);
+                                bar_num++;
+                            }
+                        }
+                    }
+                }
+
+                // Lado -YY
+                for (int i = 4 + 3 * subdiv + ring_pt * h; i < 4 + 3 * subdiv + ring_pt * (h + 1); i++)
+                {//init coord.
+                 //lados
+                    if (i == 4 + 3 * subdiv + ring_pt * h)
+                    {//cantos
+                        for (int j = 4 + 3 * subdiv + ring_pt * (h + 1); j <= 4 * subdiv + 4 + ring_pt * (h + 1) - 1; j++)
+                        {
+                            addBar(ref bars, bar_num, i, j);
+                            bar_num++;
+
+                            if (j != 4 + 3 * subdiv + ring_pt * (h + 1))
+                            { //exceto lado oposto
+                                addBar(ref bars, bar_num, 4+ring_pt*h, j);
+                                bar_num++;
+                            } //conect first corner w/ side -YY
+
+                        }
+                    }
+                    else
+                    { //pts centrais
+                        if (i > 4 + 3 * subdiv + ring_pt * h && i < 4 + ring_pt * h + 4 * subdiv)
+                        {
+                            for (int j = 4 + 3 * subdiv + ring_pt * (h + 1); j <= 4 * subdiv + 4 + ring_pt * (h + 1) - 1; j++)
+                            {
+                                addBar(ref bars, bar_num, i, j);
+                                bar_num++;
+                            }
+                            addBar(ref bars, bar_num, i, 4+ring_pt*(h+1)); //conect to init pt
+                            bar_num++;
+                        }
+                    }
+                }
+
+            }
+
+            // Horizontal connections
+            //add Lcr nesta fase!!!
+            for (int h = 0; h <= horiz_div - 2; h++)
+            {
+                for (int i = 4 + h * ring_pt; i < 4 + (h + 1) * ring_pt - 1; i++)
+                {
+                    addBar(ref bars, bar_num, i, i+1);
+                    bar_num++;
+                    if (i == 4 + (h + 1) * ring_pt - 2)
+                    {
+                        addBar(ref bars, bar_num, i+1, 4+h*ring_pt);
+                        bar_num++;
+                    }
+                }
+            }
+            return bar_num;
+        }
         private int find_nearest(int altura, double horiz_div, double ring_z_step)
         {
             int nearest = -1;
@@ -270,7 +486,14 @@ namespace Fraser
 
 
         }
-
+        private void addBar(ref double[,] bar, int numb,int start,int end)
+        {
+            bar[0, numb] = numb;
+            bar[1, numb] = start;
+            bar[2, numb] = end;
+            //add here more options as needed (active,section,Lcr etc etc)
+            bar[3, numb] = 0;
+        }
     }
 
     
