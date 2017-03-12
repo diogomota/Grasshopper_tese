@@ -13,15 +13,16 @@ namespace Fraser
 {
     public partial class Form1 : Form
     {
-        static private Population CurrentPop;
         private Population LastPop;
+        static private Population CurrentPop;
+        private Population NextPop;
         private Genome BaseDNA;
         private int _individual = 0;
 
         public Form1()
         {
             InitializeComponent();
-            
+            Robot_call.Start();
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -55,24 +56,81 @@ namespace Fraser
             //create []dist_centro
             double[] dist_centro = new double[3] { (double)w_cabo1_int.Value, (double)w_cabo2_int.Value, (double)w_cabo3_int.Value };
 
-            
+            if( BaseDNA != null || CurrentPop != null) { BaseDNA = null; CurrentPop = null; }
             BaseDNA = new Fraser.Genome((double)Largura_ap_int.Value,(int)Altura_int.Value,(double)h_div_int.Value,(double)subdiv_int.Value,(int)n_cabos_int.Value,h_cabos,dist_centro);
-            CurrentPop = new Population((int)Population_cnt.Value, BaseDNA);
-            
-          /* robApp.Project.ViewMngr.Refresh();
-            */
-           
-            
+
+            Robot_call.Start_pts(BaseDNA);
+            Robot_call.Start_bars(BaseDNA);
+            Robot_call.Refresh();
+
+
+            //CurrentPop = new Population((int)Population_cnt.Value, BaseDNA);
+            NextPop = new Population((int)Population_cnt.Value, BaseDNA);
+
+
         }
 
         private void draw_Click(object sender, EventArgs e)
         {
-            //Console.Write(CurrentPop.ind[_individual]._DNA.pt_cloud[1, 6]);
-               Robot_call.update_pts(CurrentPop.ind[_individual]._DNA);
-               Robot_call.update_bars(CurrentPop.ind[_individual]._DNA);
-               Robot_call.Refresh();
-            
+            /*Robot_call.Robot_interactive(false);
+
+            Robot_call.Get_sections();
+            Robot_call.Update_pts(CurrentPop.ind[_individual]._DNA);
+
+
+            Robot_call.Update_bars(CurrentPop.ind[_individual]._DNA);
+
+            Robot_call.Addsupports();
+            CurrentPop.ind[_individual].results=Robot_call.Run_analysis();
+            Robot_call.Refresh();
+            Robot_call.Robot_interactive(true);
+            CurrentPop.ind[_individual].get_ton();
+           // Console.Write(CurrentPop.ind[_individual].results[1, 5]);
             _individual++;
+            */
+            int c = 0;
+            this.Chart.Series.Clear();
+            this.Chart.Titles.Add("Fitness");
+            System.Windows.Forms.DataVisualization.Charting.Series series = this.Chart.Series.Add("fitness");
+            series.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Spline;
+
+
+            for (int i=0; i<8; i++)
+            {
+                Generation.Text = i.ToString();
+                CurrentPop = new Population(NextPop.ind);
+                for(int a = 0; a < Population.Pop_size; a++)
+                {
+                    CurrentPop.ind[a].Evaluate();
+                    c++;
+                    series.Points.AddXY(c, CurrentPop.ind[a].fitness);
+
+                }
+
+                Array.Sort(CurrentPop.ind);
+                LastPop = new Population(CurrentPop.ind);
+                NextPop = new Population(Population.Evolve(CurrentPop.ind));
+                
+            }
+            Robot_call.Robot_interactive(true);
+        }
+
+        private void btn_get_sec_Click(object sender, EventArgs e)
+        {
+            Robot_call.Get_sections();
+            // add to the matrix the area of each section in the get_sections
+            Sec_list.DataSource = Robot_call.sec_prop.section_names;
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void sort_Click(object sender, EventArgs e)
+        {
+            Array.Sort(CurrentPop.ind); // works
+            Console.Write(Population.Select(CurrentPop.ind));
         }
     }
 }
