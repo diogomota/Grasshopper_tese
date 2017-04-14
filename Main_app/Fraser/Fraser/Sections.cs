@@ -8,22 +8,31 @@ namespace Fraser
 {
     class Sections
     {
-        public List<String> section_names;
-        public List<double> Area;
-        public List<double> Ix;
-        public List<double> Iy;
-        public static int count;
-        public Sections(List<string> name, List<double> A, List<double> x, List<double> y)
+        public static List<String> section_names=new List<String>();
+        public static List<double> Area = new List<double>();
+        public static List<double> Iz= new List<double>();
+        public static List<double> Iy= new List<double>();
+        public static List<double> Iv = new List<double>();
+        public static List<double> ivv = new List<double>();
+
+        public static int count=0;
+
+        public Sections(string name, double A, double z, double y, double v)
         {
-            section_names = new List<String>();
-            section_names = name;
-            Area = new List<double>();
-            Area = A;
-            Ix = new List<double>();
-            Ix = x;
-            Iy = new List<double>();
-            Iy = y;
-            count = section_names.Count;
+            section_names.Add(name);
+            Area.Add(A); ;
+            Iz.Add(z);
+            Iy.Add(y);
+            Iv.Add(v);
+
+            //////////////
+            // Calc ivv //
+            //////////////
+            ivv.Add(Math.Sqrt(v / A));
+
+
+            count++;
+
         }
     }
 }

@@ -12,42 +12,48 @@ namespace Fraser
         public double[,] pt_cloud;
         //[numero,x,y,z,mutation_constants]
         public double[,] bars;
-        //[numero,pt1,pt2,secçaopode ser desativado 0/1,secção]
+        //[numero,pt1,pt2,secçaopode ser desativado 0/1,secção,id]
 
         static public int pt_cnt;
         static public int bar_cnt;
         static public int towerBar_cnt;
         static private List<Int32> connection_rings;
+        //needed for calc_operations class:
+        public static double subd; 
+        public static double horizd;
 
         //Constants
         //for pt mutation
         const double zero_mutation = 0;
-        const double min_mutation = 0.8;
-        const double med_mutation = 4.0;
-        const double max_mutation = 4.3;
-        const double arm_mutation = 0.1;
+        const double min_mutation = 2.8;
+        const double med_mutation = 5.0;
+        const double max_mutation = 7.3;
+        const double arm_mutation = 0.2;
 
         //methods
         //constructor
         public Genome(double Largura,int Altura, double horiz_div,double subdiv, int N_cabos, int[] h_cabos,double[] dist_centro)
         {
+            subd = subdiv;
+            horizd = horiz_div;
             // init matrix dim
             pt_cloud = new double[5, (int)(17*N_cabos + 4 + (4 * subdiv) * (horiz_div - 1))]; // 17*cabos para os pts dos braços
-            bars = new double[5, (int)((4 * horiz_div - 8) * (subdiv * subdiv) + (12 * horiz_div - 12) * subdiv - 8 * horiz_div + 36 * N_cabos + 20)];
-            //bars = new double[...]
+            bars = new double[6, (int)((4 * horiz_div - 8) * (subdiv * subdiv) + (12 * horiz_div - 12) * subdiv - 8 * horiz_div + 36 * N_cabos + 20)];
+
 
             pt_add_tower(ref pt_cloud, Largura, Altura,horiz_div,subdiv,ref pt_cnt);
             pt_add_arms(ref pt_cloud, Largura, Altura, horiz_div, subdiv, N_cabos, h_cabos, dist_centro, ref pt_cnt, ref connection_rings);
             bar_cnt = connect_bars(ref bars,(int)subdiv,(int)horiz_div);
+
             add_arm_bars(ref bars, ref bar_cnt, connection_rings, (int)subdiv, N_cabos,(int)horiz_div);
-            //
+            
             towerBar_cnt = bar_cnt - 36 * N_cabos;
         }
         //2nd constructor, to use when creating a new individual
         public Genome()
         {
             pt_cloud = new double[5, pt_cnt];
-            bars = new double[4, bar_cnt];
+            bars = new double[6, bar_cnt];
 
         }
 
@@ -278,18 +284,18 @@ namespace Fraser
                     {
                         if (j == 4)
                         {
-                            addBar(ref bars, bar_num, 0, j, 0, 0);//cantos nao sao desactivados
+                            addBar(ref bars, bar_num, 0, j, 0, 0,0);//cantos nao sao desactivados / id =0 leg
                             bar_num++;
                         }
                         else { 
 
-                            addBar(ref bars, bar_num, 0, j,1,0);
+                            addBar(ref bars, bar_num, 0, j,1,0,1); // id =1 bracing
                             bar_num++;
                         }
                     }
                     for (int j = 8 + 4 * (subdiv - 1) - 1; j >= 8 + 4 * (subdiv - 1) - subdiv; j--)
                     {
-                        addBar(ref bars, bar_num, 0, j, 1, 0);
+                        addBar(ref bars, bar_num, 0, j, 1, 0,1); // id =1 bracing
                         bar_num++;
                     }
 
@@ -300,12 +306,12 @@ namespace Fraser
                     {
                         if (j == 4+subdiv)
                         {
-                            addBar(ref bars, bar_num, 1, j, 0, 0);//cantos nao sao desactivados
+                            addBar(ref bars, bar_num, 1, j, 0, 0,0);//cantos nao sao desactivados /id =0 leg
                             bar_num++;
                         }
                         else
                         {
-                            addBar(ref bars, bar_num, 1, j, 1, 0);
+                            addBar(ref bars, bar_num, 1, j, 1, 0,1); // id =1 bracing
                             bar_num++;
                         }
                     }
@@ -317,11 +323,11 @@ namespace Fraser
                     {
                         if (j == 4 + 2 * subdiv)
                         {
-                            addBar(ref bars, bar_num, 2, j, 0, 0);//cantos nao sao desactivados
+                            addBar(ref bars, bar_num, 2, j, 0, 0,0);//cantos nao sao desactivados / id=0 leg
                             bar_num++;
                         }else
                         {
-                            addBar(ref bars, bar_num, 2, j, 1, 0);
+                            addBar(ref bars, bar_num, 2, j, 1, 0,1); // id =1 bracing
                             bar_num++;
                         }
                     }
@@ -333,15 +339,15 @@ namespace Fraser
                     {
                         if (j == 4 + 3 * subdiv)
                         {
-                            addBar(ref bars, bar_num, 3, j, 0, 0);//cantos nao sao desactivados
+                            addBar(ref bars, bar_num, 3, j, 0, 0,0);//cantos nao sao desactivados / id=0 leg
                             bar_num++;
                         }else
                         {
-                            addBar(ref bars, bar_num, 3, j, 1, 0);
+                            addBar(ref bars, bar_num, 3, j, 1, 0,1); // id =1 bracing
                             bar_num++;
                         }
                     }
-                    addBar(ref bars, bar_num, 3, 4, 1, 0);
+                    addBar(ref bars, bar_num, 3, 4, 1, 0,1); // id =1 bracing
                     bar_num++;
                 }
             }
@@ -366,11 +372,11 @@ namespace Fraser
                         { //-1 para nao conectar a diagonal oposta
                             if (j  == 4 + ring_pt * (h + 1))
                             {
-                                addBar(ref bars, bar_num, i, j, 0, 0); // barras dos cantos nao podem ser desactivadas
+                                addBar(ref bars, bar_num, i, j, 0, 0,0); // barras dos cantos nao podem ser desactivadas / id=0 leg
                                 bar_num++;
                             }else
                             {
-                                addBar(ref bars, bar_num, i, j, 1, 0); 
+                                addBar(ref bars, bar_num, i, j, 1, 0,1);  // id =1 bracing
                                 bar_num++;
                             }
                         }
@@ -379,7 +385,7 @@ namespace Fraser
                     {
                         for (int j = 4 + ring_pt * (h + 1) + 1; j <= subdiv + 4 + ring_pt * (h + 1) - 1; j++)
                         { //+1 para nao conectar a diagonal oposta
-                            addBar(ref bars, bar_num, i, j, 1, 0); //quando i = j-ring_pt  id bar as active(always)
+                            addBar(ref bars, bar_num, i, j, 1, 0,1); //quando i = j-ring_pt  id bar as active(always)  // id =1 bracing
                             bar_num++; 
                         }
                     }
@@ -389,7 +395,7 @@ namespace Fraser
                         {
                             for (int j = 4 + ring_pt * (h + 1); j <= subdiv + 4 + ring_pt * (h + 1); j++)
                             {
-                                addBar(ref bars, bar_num, i, j,1,0);
+                                addBar(ref bars, bar_num, i, j,1,0,1); // id =1 bracing
                                 bar_num++;
                             }
                         }
@@ -406,11 +412,11 @@ namespace Fraser
                         {
                             if (j == subdiv + 4 + ring_pt * (h + 1))
                             {
-                                addBar(ref bars, bar_num, i, j, 0, 0);// barras de canto nao podem ser desactivadas
+                                addBar(ref bars, bar_num, i, j, 0, 0,0);// barras de canto nao podem ser desactivadas / id=0 leg
                                 bar_num++;
                             }else
                             {
-                                addBar(ref bars, bar_num, i, j, 1, 0); 
+                                addBar(ref bars, bar_num, i, j, 1, 0,1); //id = 1 bracing
                                 bar_num++;
                             }
                         }
@@ -419,7 +425,7 @@ namespace Fraser
                     {
                         for (int j = 4 + subdiv + ring_pt * (h + 1) + 1; j <= 2 * subdiv + 4 + ring_pt * (h + 1) - 1; j++)
                         {
-                            addBar(ref bars, bar_num, i, j,1,0);
+                            addBar(ref bars, bar_num, i, j,1,0,1); //id = 1 bracing
                             bar_num++;
                         }
 
@@ -430,7 +436,7 @@ namespace Fraser
                         {
                             for (int j = 4 + subdiv + ring_pt * (h + 1); j <= 2 * subdiv + 4 + ring_pt * (h + 1); j++)
                             {
-                                addBar(ref bars, bar_num, i, j,1,0);
+                                addBar(ref bars, bar_num, i, j, 1, 0, 1); //id = 1 bracing
                                 bar_num++;
                             }
                         }
@@ -447,12 +453,12 @@ namespace Fraser
                         {
                             if (j == 2*subdiv + 4 + ring_pt * (h + 1))
                             {
-                                addBar(ref bars, bar_num, i, j, 0, 0);// barras de canto nao podem ser desactivadas
+                                addBar(ref bars, bar_num, i, j, 0, 0,0);// barras de canto nao podem ser desactivadas /id=0 leg
                                 bar_num++;
                             }
                             else
                             {
-                                addBar(ref bars, bar_num, i, j, 1, 0);
+                                addBar(ref bars, bar_num, i, j, 1, 0,1);  //id = 1 bracing
                                 bar_num++;
                             }
                         }
@@ -461,7 +467,7 @@ namespace Fraser
                     {
                         for (int j = 4 + 2 * subdiv + ring_pt * (h + 1) + 1; j <= 3 * subdiv + 4 + ring_pt * (h + 1) - 1; j++)
                         {
-                            addBar(ref bars, bar_num, i, j,1,0);
+                            addBar(ref bars, bar_num, i, j,1,0,1); //id = 1 bracing
                             bar_num++;
                         }
                     }
@@ -471,7 +477,7 @@ namespace Fraser
                         {
                             for (int j = 4 + 2 * subdiv + ring_pt * (h + 1); j <= 3 * subdiv + 4 + ring_pt * (h + 1); j++)
                             {
-                                addBar(ref bars, bar_num, i, j,1,0);
+                                addBar(ref bars, bar_num, i, j,1,0,1); //id = 1 bracing
                                 bar_num++;
                             }
                         }
@@ -488,18 +494,18 @@ namespace Fraser
                         {
                             if (j == 3*subdiv + 4 + ring_pt * (h + 1))
                             {
-                                addBar(ref bars, bar_num, i, j, 0, 0);// barras de canto nao podem ser desactivadas
+                                addBar(ref bars, bar_num, i, j, 0, 0,0);// barras de canto nao podem ser desactivadas /id=0 leg
                                 bar_num++;
                             }
                             else
                             {
-                                addBar(ref bars, bar_num, i, j, 1, 0);
+                                addBar(ref bars, bar_num, i, j, 1, 0,1); //id = 1 bracing
                                 bar_num++;
                             }
 
                             if (j != 4 + 3 * subdiv + ring_pt * (h + 1))
                             { //exceto lado oposto
-                                addBar(ref bars, bar_num, 4+ring_pt*h, j,1,0);
+                                addBar(ref bars, bar_num, 4+ring_pt*h, j,1,0,1); //id = 1 bracing
                                 bar_num++;
                             } //conect first corner w/ side -YY
 
@@ -511,10 +517,10 @@ namespace Fraser
                         {
                             for (int j = 4 + 3 * subdiv + ring_pt * (h + 1); j <= 4 * subdiv + 4 + ring_pt * (h + 1) - 1; j++)
                             {
-                                addBar(ref bars, bar_num, i, j,1,0);
+                                addBar(ref bars, bar_num, i, j,1,0,1); //id = 1 bracing
                                 bar_num++;
                             }
-                            addBar(ref bars, bar_num, i, 4+ring_pt*(h+1),1,0); //conect to init pt
+                            addBar(ref bars, bar_num, i, 4+ring_pt*(h+1),1,0,1); //conect to init pt  //id = 1 bracing
                             bar_num++;
                         }
                     }
@@ -523,16 +529,16 @@ namespace Fraser
             }
 
             // Horizontal connections
-            //add Lcr nesta fase!!!
+
             for (int h = 0; h <= horiz_div - 2; h++)
             {
                 for (int i = 4 + h * ring_pt; i < 4 + (h + 1) * ring_pt - 1; i++)
                 {
-                    addBar(ref bars, bar_num, i, i+1,0,0);
+                    addBar(ref bars, bar_num, i, i+1,1,0,2); //id = 2 horiz bracing
                     bar_num++;
                     if (i == 4 + (h + 1) * ring_pt - 2)
                     {
-                        addBar(ref bars, bar_num, i+1, 4+h*ring_pt,0,0);
+                        addBar(ref bars, bar_num, i+1, 4+h*ring_pt,1,0,2);  //id = 2 horiz bracing
                         bar_num++;
                     }
                 }
@@ -552,97 +558,97 @@ namespace Fraser
                         // connect w/ tower
 
                         //Lower right
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + subdiv, last_tower_pt + i + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + subdiv, last_tower_pt + i + a * 34, 0, -1,4);
                         bar_num++;
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1)+2 * subdiv, last_tower_pt + 5 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1)+2 * subdiv, last_tower_pt + 5 + a * 34, 0, -1, 4);
                         bar_num++;
                         //Upper right
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a]) + subdiv, last_tower_pt + 9 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a]) + subdiv, last_tower_pt + 9 + a * 34, 0, -1, 4);
                         bar_num++;
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a]) + 2 * subdiv, last_tower_pt + i + 13 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a]) + 2 * subdiv, last_tower_pt + i + 13 + a * 34, 0, -1, 4);
                         bar_num++;
 
                         //Lower left
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1), last_tower_pt + i + 17 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1), last_tower_pt + i + 17 + a * 34, 0, -1, 4);
                         bar_num++;
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + 3 * subdiv, last_tower_pt + i + 22 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + 3 * subdiv, last_tower_pt + i + 22 + a * 34, 0, -1, 4);
                         bar_num++;
                         //Upper left
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a]), last_tower_pt + i + 26 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a]), last_tower_pt + i + 26 + a * 34, 0, -1, 4);
                         bar_num++;
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a]) + 3 * subdiv, last_tower_pt + i + 30 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a]) + 3 * subdiv, last_tower_pt + i + 30 + a * 34, 0, -1, 4);
                         bar_num++;
 
 
                         //Diagonals
                         //1st plane right
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + subdiv, last_tower_pt + 9 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + subdiv, last_tower_pt + 9 + a * 34, 0, -1, 4);
                         bar_num++;
                         //1st plane left
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1), last_tower_pt + 26 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1), last_tower_pt + 26 + a * 34, 0, -1, 4);
                         bar_num++;
 
                         //2nd plane right
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + 2 * subdiv, last_tower_pt + 13 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + 2 * subdiv, last_tower_pt + 13 + a * 34, 0, -1, 4);
                         bar_num++;
                         //2nd plane left
-                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + 3 * subdiv, last_tower_pt + 30 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, 4 + (4 + (subdiv - 1) * 4) * (connection_rings[0 + a] - 1) + 3 * subdiv, last_tower_pt + 30 + a * 34, 0, -1, 4);
                         bar_num++;
 
                     }
 
                     //diagonals 1st plane right
-                    addBar(ref bars, bar_num, last_tower_pt+i+a*34, last_tower_pt + 10+i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt+i+a*34, last_tower_pt + 10+i + a * 34, 0, -1, 4);
                     bar_num++;
-                    addBar(ref bars, bar_num, last_tower_pt + i + a * 34, last_tower_pt + 9 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + i + a * 34, last_tower_pt + 9 + i + a * 34, 0, -1, 4);
                     bar_num++;
                     //diagonals 1st plane left
-                    addBar(ref bars, bar_num, last_tower_pt + 17 + i + a * 34, last_tower_pt + 27 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 17 + i + a * 34, last_tower_pt + 27 + i + a * 34, 0, -1, 4);
                     bar_num++;
-                    addBar(ref bars, bar_num, last_tower_pt + 17 + i + a * 34, last_tower_pt + 26 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 17 + i + a * 34, last_tower_pt + 26 + i + a * 34, 0, -1, 4);
                     bar_num++;
 
                     //diagonals 2nd plane right
-                    addBar(ref bars, bar_num, last_tower_pt + 5 + i + a * 34, last_tower_pt + 14 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 5 + i + a * 34, last_tower_pt + 14 + i + a * 34, 0, -1, 4);
                     bar_num++;
-                    addBar(ref bars, bar_num, last_tower_pt + 5 + i + a * 34, last_tower_pt + 13 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 5 + i + a * 34, last_tower_pt + 13 + i + a * 34, 0, -1, 4);
                     bar_num++;
 
                     //diagonals 2nd plane left
-                    addBar(ref bars, bar_num, last_tower_pt + 22 + i + a * 34, last_tower_pt + 31 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 22 + i + a * 34, last_tower_pt + 31 + i + a * 34, 0, -1, 4);
                     bar_num++;
-                    addBar(ref bars, bar_num, last_tower_pt + 22 + i + a * 34, last_tower_pt + 30 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 22 + i + a * 34, last_tower_pt + 30 + i + a * 34, 0, -1, 4);
                     bar_num++;
 
                     //1st lower chord
                     //right
-                    addBar(ref bars, bar_num, last_tower_pt + i + a * 34, last_tower_pt + 1 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + i + a * 34, last_tower_pt + 1 + i + a * 34, 0, -1, 4);
                     bar_num++;
                     //left
-                    addBar(ref bars, bar_num, last_tower_pt + 17 + i + a * 34, last_tower_pt + 18 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 17 + i + a * 34, last_tower_pt + 18 + i + a * 34, 0, -1, 4);
                     bar_num++;
 
                     //2nd lower chord
                     //right
-                    addBar(ref bars, bar_num, last_tower_pt + 5 + i + a * 34, last_tower_pt + 6 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 5 + i + a * 34, last_tower_pt + 6 + i + a * 34, 0, -1, 4);
                     bar_num++;
                     //left
-                    addBar(ref bars, bar_num, last_tower_pt + 22 + i + a * 34, last_tower_pt + 23 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 22 + i + a * 34, last_tower_pt + 23 + i + a * 34, 0, -1, 4);
                     bar_num++;
 
                     //1st upper chord
                     //right
-                    addBar(ref bars, bar_num, last_tower_pt + 9 + i + a * 34, last_tower_pt + 10 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 9 + i + a * 34, last_tower_pt + 10 + i + a * 34, 0, -1, 4);
                     bar_num++;
                     //left
-                    addBar(ref bars, bar_num, last_tower_pt + 26 + i + a * 34, last_tower_pt + 27 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 26 + i + a * 34, last_tower_pt + 27 + i + a * 34, 0, -1, 4);
                     bar_num++;
 
                     //2nd upper chord
 
-                    addBar(ref bars, bar_num, last_tower_pt + 13 + i + a * 34, last_tower_pt + 14 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 13 + i + a * 34, last_tower_pt + 14 + i + a * 34, 0, -1, 4);
                     bar_num++;
-                    addBar(ref bars, bar_num, last_tower_pt + 30 + i + a * 34, last_tower_pt + 31 + i + a * 34, 0, -1);
+                    addBar(ref bars, bar_num, last_tower_pt + 30 + i + a * 34, last_tower_pt + 31 + i + a * 34, 0, -1, 4);
                     bar_num++;
 
                     //end lines
@@ -650,48 +656,48 @@ namespace Fraser
                     {
                         //1nd lower chord
                         //right
-                        addBar(ref bars, bar_num, last_tower_pt + 1 + i + a * 34, last_tower_pt + 2 + i + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 1 + i + a * 34, last_tower_pt + 2 + i + a * 34, 0, -1, 4);
                         bar_num++;
                         //left
-                        addBar(ref bars, bar_num, last_tower_pt + 18 + i + a * 34, last_tower_pt + 19 + i + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 18 + i + a * 34, last_tower_pt + 19 + i + a * 34, 0, -1, 4);
                         bar_num++;
 
                         //2nd lower chord
                         //right
-                        addBar(ref bars, bar_num, last_tower_pt + 6 + i + a * 34, last_tower_pt + 4 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 6 + i + a * 34, last_tower_pt + 4 + a * 34, 0, -1, 4);
                         bar_num++;
                         //left
-                        addBar(ref bars, bar_num, last_tower_pt + 23 + i + a * 34, last_tower_pt + 21 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 23 + i + a * 34, last_tower_pt + 21 + a * 34, 0, -1, 4);
                         bar_num++;
 
                         //1st upper chord
                         //right
-                        addBar(ref bars, bar_num, last_tower_pt + 10 + i + a * 34, last_tower_pt + 4 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 10 + i + a * 34, last_tower_pt + 4 + a * 34, 0, -1, 4);
                         bar_num++;
                         //left
-                        addBar(ref bars, bar_num, last_tower_pt + 27 + i + a * 34, last_tower_pt + 21 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 27 + i + a * 34, last_tower_pt + 21 + a * 34, 0, -1, 4);
                         bar_num++;
 
                         //2nd upper chord
                         //right
-                        addBar(ref bars, bar_num, last_tower_pt + 14 + i + a * 34, last_tower_pt + 4 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 14 + i + a * 34, last_tower_pt + 4 + a * 34, 0, -1, 4);
                         bar_num++;
                         //left
-                        addBar(ref bars, bar_num, last_tower_pt + 31 + i + a * 34, last_tower_pt + 21 + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 31 + i + a * 34, last_tower_pt + 21 + a * 34, 0, -1, 4);
                         bar_num++;
 
                         //Diagonals
                         //1st plane right
-                        addBar(ref bars, bar_num, last_tower_pt + 1 + i + a * 34, last_tower_pt + 10 + i + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 1 + i + a * 34, last_tower_pt + 10 + i + a * 34, 0, -1, 4);
                         bar_num++;
                         //1st plane left
-                        addBar(ref bars, bar_num, last_tower_pt + 18 + i + a * 34, last_tower_pt + 27 + i + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 18 + i + a * 34, last_tower_pt + 27 + i + a * 34, 0, -1, 4);
                         bar_num++;
                         //2nd plane right
-                        addBar(ref bars, bar_num, last_tower_pt + 6 + i + a * 34, last_tower_pt + 14 + i + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 6 + i + a * 34, last_tower_pt + 14 + i + a * 34, 0, -1, 4);
                         bar_num++;
                         //2nd plane left
-                        addBar(ref bars, bar_num, last_tower_pt + 23 + i + a * 34, last_tower_pt + 31 + i + a * 34, 0, -1);
+                        addBar(ref bars, bar_num, last_tower_pt + 23 + i + a * 34, last_tower_pt + 31 + i + a * 34, 0, -1, 4);
                         bar_num++;
                     }
                 }
@@ -742,7 +748,7 @@ namespace Fraser
             
 
         }
-        private void addBar(ref double[,] bar, int numb,int start,int end, int can_deact, int section)
+        private void addBar(ref double[,] bar, int numb,int start,int end, int can_deact, int section, int id)
         {
             bar[0, numb] = numb;
             bar[1, numb] = start;
@@ -750,6 +756,7 @@ namespace Fraser
             //add here more options as needed (active,section,Lcr etc etc)
             bar[3, numb] = can_deact;
             bar[4, numb] = section;
+            bar[5, numb] = id; // 0 = leg / 1= bracing /  2 = horizontal bar / 3 = plane bracing (triagulated or not) / 4 = arms (not needed for stability checks but need id)
         }
 
     }
